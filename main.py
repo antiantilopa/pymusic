@@ -5,7 +5,7 @@ from synth import *
 import os
 
 
-Synths.seconds_per_note = 0.4
+Synths.seconds_per_note = 0.1
 
 width = 20
 
@@ -66,10 +66,18 @@ def click(g_obj: GameObject, keys: tuple[bool, bool, bool], pos: Vector2d):
     if keys[2]:
         if g_obj.get_component(ColorComponent).color == ColorComponent.BLACK:
             return
-        if scroll + g_obj.get_component(PosComponent).pos.intx() == len(tones_list[mode]) - 1:
-            tones_list[mode].pop(-1)
-        else:
-            tones_list[mode][scroll + g_obj.get_component(PosComponent).pos.intx()] = None
+        for m in range(4):
+            if scroll + g_obj.get_component(PosComponent).pos.intx() > len(tones_list[m]) - 1:
+                continue
+            elif scroll + g_obj.get_component(PosComponent).pos.intx() == len(tones_list[m]) - 1 and tones_list[m][scroll + g_obj.get_component(PosComponent).pos.intx()] is None:
+                tones_list[m].pop(-1)
+                continue
+            if tones_list[m][scroll + g_obj.get_component(PosComponent).pos.intx()] is None:
+                continue
+            if g_obj.get_component(PosComponent).pos.inty() != tones_list[m][scroll + g_obj.get_component(PosComponent).pos.intx()] - Note.minimal_tone:
+                continue
+            else:
+                tones_list[m][scroll + g_obj.get_component(PosComponent).pos.intx()] = None
     update_cells_color()
 
 
@@ -198,13 +206,20 @@ def play(g_obj: GameObject, keys: list[int]):
         else:
             notes[m].append(Note(d, t))
     
-    party1 = Synths.get_tri_party(notes[0])
-    party2 = Synths.get_tri_party(notes[1])
-    party3 = Synths.get_sqr_party(notes[2])
+    # party1 = Synths.get_sqr_party(notes[0])
+    # party2 = Synths.get_tri_party(notes[1])
+    # party3 = Synths.get_pin_party(notes[2])
+    # party4 = Synths.get_pqr_party(notes[3])
 
-    music = Synths.merge_parties(party1, party2, party3)
+    party1 = Synths.get_pin_party(notes[0])
+    party2 = Synths.get_pin_party(notes[1])
+    party3 = Synths.get_tri_party(notes[2])
+    party4 = Synths.get_pin_party(notes[3])
 
-    playing = Synths.play_arr(music, delay=0, loops=-1)
+    music = Synths.merge_parties(party1, party2, party3, party4)
+
+    # Synths.save_to_wav(music, "melody.wav")
+    playing = Synths.play_arr(music, delay=0, loops=0)
 
 music_sec.add_component(KeyBindComponent([pg.K_p], 0, 1, play))
 
